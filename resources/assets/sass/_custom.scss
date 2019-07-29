@@ -1,0 +1,30 @@
+.card-file{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    padding:15px 25px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+    border: 1px solid rgba(221, 221, 221, 0.5);
+}
+.d-flex{
+    display: flex;
+}
+.justify-content-between{
+    justify-content: space-between;
+}
+.align-items-baseline{
+    align-items: baseline;
+}
+
+.sidebar-file{
+    background: #fff;
+    width: 100%;
+  
+}
+
+.files{
+    width: 100%;
+    display: block;
+}
