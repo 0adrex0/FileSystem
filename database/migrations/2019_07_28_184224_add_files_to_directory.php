@@ -14,7 +14,7 @@ class AddFilesToDirectory extends Migration
     public function up()
     {
         Schema::table('files', function($table){
-            $table->string('files_path');
+            $table->longText('files_path');
         });
     }
 

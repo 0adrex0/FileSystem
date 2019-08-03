@@ -36,6 +36,7 @@
                                 </div>
                             </div>
                         @endforeach
+                        {{$files->links()}}
                     @else
                         <p>Files not found</p>
                     @endif
