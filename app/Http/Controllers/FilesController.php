@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\File;
+use App\User;
 
 class FilesController extends Controller
 {
@@ -27,12 +28,12 @@ class FilesController extends Controller
      
     public function index()
     {
-        
+  
         $data = [
-           'files' => File::orderBy('created_at','desc')->paginate(5)
-           
+            //'files' => $files->orderBy('created_at','desc')->paginate(5),
+            'files' => File::select('user_id')->distinct()->orderBy('created_at','desc')->paginate(5),    
         ];
-
+        
         return view('files.index')->with($data);
     }
 
@@ -55,7 +56,7 @@ class FilesController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'title' => 'required',
+            //'title' => 'required',
            
         ]);
         
@@ -63,35 +64,25 @@ class FilesController extends Controller
             $files = $request->file('files_path');
             // Puth directory
             $file_path = 'public/files_paths';
-            foreach($files as $key => $file){
-                $filenameWithExt = $file->getClientOriginalName();
+            foreach($files as $key => $f){
+                $filenameWithExt = $f->getClientOriginalName();
                 //Get just filename
                 $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
                 //Get just ext
-                $extension = $file->getClientOriginalExtension();
+                $extension = $f->getClientOriginalExtension();
                 //Filename to store
                 $file_time = time();
                 $fileNameToStore = $filename.'_'.$file_time.'.'.$extension;
-                $file_data = [
-                     //Upload File
-                    'file_full_path' => $file->storeAs($file_path, $fileNameToStore),
-                    'file_path' => $file_path,
-                    'file_name' => $filename,
-                    'file_time' => $file_time,
-                    'file_expansion' => $extension,
-                ];
-                $path_arr[$key] = $file_data;
+                $file = new File;
+                $file->title = $filename;
+                $file->files_path = $f->storeAs($file_path, $fileNameToStore);
+                $file->user_id = auth()->user()->id;
+                $file->save();
+                
             }
         }else{
             $path_arr = '';
         }
-        //dd($file_data);
-        
-        $file = new File;
-        $file->title = $request->input('title');
-        $file->user_id = auth()->user()->id;
-        $file->files_path = json_encode($path_arr);
-        $file->save();
         
         return redirect('/files')->with('success', 'Directory Created');
     }
@@ -104,14 +95,13 @@ class FilesController extends Controller
      */
     public function show($id)
     {
-        $file = File::find($id);
-        //$files_arr = json_decode($file->files_path);
+     
+       $files = File::where('user_id', $id)->get();
+        
         $data = array(
-            'file' => $file,
-            'files_arr' => json_decode($file->files_path)
+            'files' => $files,
         );
-        //$size = Storage::size($files_arr[0]);
-       // dd($size);
+        
         return view('files.show')->with($data);
     }
 
@@ -149,42 +139,32 @@ class FilesController extends Controller
         $this->validate($request, [
             'title' => 'required',
         ]);
-        
+        $file = File::find($id);
         if($request->hasFile('files_path')){
             $files = $request->file('files_path');
             // Puth directory
             $file_path = 'public/files_paths';
-            foreach($files as $key => $file){
-                $filenameWithExt = $file->getClientOriginalName();
-                //Get just filename
-                $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
-                //Get just ext
-                $extension = $file->getClientOriginalExtension();
-                //Filename to store
-                $file_time = time();
-                $fileNameToStore = $filename.'_'.$file_time.'.'.$extension;
-                $file_data = [
-                     //Upload File
-                    'file_full_path' => $file->storeAs($file_path, $fileNameToStore),
-                    'file_path' => $file_path,
-                    'file_name' => $filename,
-                    'file_time' => $file_time,
-                    'file_expansion' => $extension,
-                ];
-                $path_arr[$key] = $file_data;
+            
+            $filenameWithExt = $files->getClientOriginalName();
+            //Get just filename
+            $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
+            //Get just ext
+            $extension = $files->getClientOriginalExtension();
+            //Filename to store
+            $file_time = time();
+            $fileNameToStore = $filename.'_'.$file_time.'.'.$extension;
+
+            
+            $file->title = $filename;
+            Storage::delete($file->files_path);
+            $file->files_path = $files->storeAs($file_path, $fileNameToStore);
+            $file->user_id = auth()->user()->id;
+            
+        }else{
+            if($request->input('title') != $file->title){
+                $file->title = $request->input('title');
             }
         }
-        //dd($path_arr);
-        $file = File::find($id);
-        if(auth()->user()->id !== $file->user_id){
-            return redirect('/files')->with('error', 'Unauthorized Page');
-        }
-        $file->title = $request->input('title');
-        //Concatenate old and new files_path
-        $files_path = array_merge(json_decode($file->files_path), $path_arr);
-       
-        $file->files_path = json_encode($files_path);
-        
         $file->save();
         return redirect('/files')->with('success', 'Directory Update');
     }
@@ -201,13 +181,11 @@ class FilesController extends Controller
         if(auth()->user()->id !== $file->user_id){
             return redirect('/files')->with('error', 'Unauthorized Page');
         }
-        $files_path = json_decode($file->files_path);
-        if(!empty($files_path)){
-            foreach($files_path as $file_item){
-                dd($file_item);
-                Storage::delete($file_item['full_path']);
-            }
-        }
+        
+       
+        Storage::delete($file->files_path);
+        
+        
         $file->delete();
         return redirect('/files')->with('success', 'Directory Removed');        
     }

@@ -10,10 +10,10 @@
         </div>
         <div class="row">
                 {!! Form::open(['action' => 'FilesController@store', 'method' => 'POST',  'enctype' => 'multipart/form-data', 'files' => true]) !!}
-                    <div class="form-group">
+                   <!-- <div class="form-group">
                         {{Form::label('title', 'Title')}}
                         {{Form::text('title', '', ['class' => 'form-control', 'placeholder' => 'Title'])}}
-                    </div>
+                    </div>-->
                     <div class="form-group">
                         {{Form::file('files_path[]', ['multiple'])}}
                     </div>

@@ -15,7 +15,7 @@
                         {{Form::text('title', $file->title, ['class' => 'form-control', 'placeholder' => 'Title'])}}
                     </div>
                     <div class="form-group">
-                            {{Form::file('files_path[]', ['multiple'])}}
+                            {{Form::file('files_path')}}
                     </div>
                     {{Form::hidden('_method','PUT')}}
                     {{Form::submit('Submit', ['class'=>'btn btn-primary'])}}
