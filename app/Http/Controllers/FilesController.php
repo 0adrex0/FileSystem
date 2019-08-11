@@ -29,12 +29,9 @@ class FilesController extends Controller
     public function index()
     {
   
-        $data = [
-            //'files' => $files->orderBy('created_at','desc')->paginate(5),
-            'files' => File::select('user_id')->distinct()->orderBy('created_at','desc')->paginate(5),    
-        ];
+        $files = File::select('user_id')->distinct()->orderBy('created_at', 'desc')->paginate(5);
         
-        return view('files.index')->with($data);
+        return view('files.index',compact('files'));
     }
 
     /**
@@ -64,24 +61,23 @@ class FilesController extends Controller
             $files = $request->file('files_path');
             // Puth directory
             $file_path = 'public/files_paths';
-            foreach($files as $key => $f){
-                $filenameWithExt = $f->getClientOriginalName();
+            foreach($files as $key => $value){
+                $filenameWithExt = $value->getClientOriginalName();
                 //Get just filename
                 $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
                 //Get just ext
-                $extension = $f->getClientOriginalExtension();
+                $extension = $value->getClientOriginalExtension();
                 //Filename to store
                 $file_time = time();
                 $fileNameToStore = $filename.'_'.$file_time.'.'.$extension;
                 $file = new File;
                 $file->title = $filename;
-                $file->files_path = $f->storeAs($file_path, $fileNameToStore);
+                $file->files_path = $value->storeAs($file_path, $fileNameToStore);
                 $file->user_id = auth()->user()->id;
+                $file->extension = $extension;
                 $file->save();
                 
             }
-        }else{
-            $path_arr = '';
         }
         
         return redirect('/files')->with('success', 'Directory Created');
@@ -96,8 +92,7 @@ class FilesController extends Controller
     public function show($id)
     {
      
-       $files = File::where('user_id', $id)->get();
-        
+       $files = File::where('user_id', $id)->orderBy('created_at','desc')->paginate(5);
         $data = array(
             'files' => $files,
         );
@@ -133,13 +128,12 @@ class FilesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, File $file)
     {
         
         $this->validate($request, [
             'title' => 'required',
         ]);
-        $file = File::find($id);
         if($request->hasFile('files_path')){
             $files = $request->file('files_path');
             // Puth directory
@@ -159,7 +153,7 @@ class FilesController extends Controller
             Storage::delete($file->files_path);
             $file->files_path = $files->storeAs($file_path, $fileNameToStore);
             $file->user_id = auth()->user()->id;
-            
+            $file->extension = $extension;
         }else{
             if($request->input('title') != $file->title){
                 $file->title = $request->input('title');
