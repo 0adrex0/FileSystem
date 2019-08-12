@@ -11,13 +11,26 @@
 .d-flex{
     display: flex;
 }
+.d-inline-block{
+    display: inline-block;
+}
+
 .justify-content-between{
     justify-content: space-between;
+}
+.justify-content-around {
+    justify-content: space-around;
 }
 .align-items-baseline{
     align-items: baseline;
 }
+.align-items-center{
+    align-items: center;
+}
 
+.text-center{
+    text-align: center;
+}
 .sidebar-file{
     background: #fff;
     width: 100%;
@@ -28,3 +41,4 @@
     width: 100%;
     display: block;
 }
+

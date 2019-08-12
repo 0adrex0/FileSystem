@@ -4,11 +4,15 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
+use App\Http\Traits\StorageProvider;
 use App\File;
 use App\User;
 
 class FilesController extends Controller
 {
+    use StorageProvider;
+
      /**
      * Create a new controller instance.
      *
@@ -28,7 +32,6 @@ class FilesController extends Controller
      
     public function index()
     {
-  
         $files = File::select('user_id')->distinct()->orderBy('created_at', 'desc')->paginate(5);
         
         return view('files.index',compact('files'));
@@ -57,26 +60,25 @@ class FilesController extends Controller
            
         ]);
         
+        
         if($request->hasFile('files_path')){
             $files = $request->file('files_path');
-            // Puth directory
-            $file_path = 'public/files_paths';
-            foreach($files as $key => $value){
-                $filenameWithExt = $value->getClientOriginalName();
-                //Get just filename
-                $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
-                //Get just ext
-                $extension = $value->getClientOriginalExtension();
-                //Filename to store
-                $file_time = time();
-                $fileNameToStore = $filename.'_'.$file_time.'.'.$extension;
-                $file = new File;
-                $file->title = $filename;
-                $file->files_path = $value->storeAs($file_path, $fileNameToStore);
-                $file->user_id = auth()->user()->id;
-                $file->extension = $extension;
-                $file->save();
-                
+            
+            foreach($files as $value){
+                $file = $this->getFileData($value, $this->getRelativeFilesStorage());
+
+                try {
+                    Storage::putFileAs($file->directory, $value, $file->processedName);
+                } catch (Exception $exception) {
+                    return redirect('/files')->with('error', 'Failed while writting file');
+                }
+
+                $newFile = new File;
+                $newFile->title = $file->name;
+                $newFile->files_path = $file->processedName;
+                $newFile->user_id = auth()->user()->id;
+                $newFile->extension = $file->extension;
+                $newFile->save();
             }
         }
         
@@ -89,14 +91,17 @@ class FilesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(int $id)
     {
-     
-       $files = File::where('user_id', $id)->orderBy('created_at','desc')->paginate(5);
-        $data = array(
+        $files = File::where('user_id', $id)->orderBy('created_at','desc')->paginate(5);
+
+        foreach ($files as $file) {
+            $file->size = Storage::size($this->getRelativeFilesStorage().DIRECTORY_SEPARATOR.$file->files_path);
+        }
+
+        $data = array( 
             'files' => $files,
         );
-        
         return view('files.show')->with($data);
     }
 
@@ -108,7 +113,6 @@ class FilesController extends Controller
      */
     public function edit($id)
     {
-        
         $file = File::find($id);
         $data = array(
             'file' => $file
@@ -118,7 +122,6 @@ class FilesController extends Controller
             return redirect('/files')->with('error', 'Unauthorized Page');
         }
         return view('files.edit')->with($data);
-
     }
 
     /**
@@ -130,35 +133,24 @@ class FilesController extends Controller
      */
     public function update(Request $request, File $file)
     {
-        
         $this->validate($request, [
             'title' => 'required',
         ]);
         if($request->hasFile('files_path')){
-            $files = $request->file('files_path');
-            // Puth directory
-            $file_path = 'public/files_paths';
-            
-            $filenameWithExt = $files->getClientOriginalName();
-            //Get just filename
-            $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
-            //Get just ext
-            $extension = $files->getClientOriginalExtension();
-            //Filename to store
-            $file_time = time();
-            $fileNameToStore = $filename.'_'.$file_time.'.'.$extension;
+            $fileData = $this->getFileData($request->file('files_path'), $this->getFilesStorage());
 
-            
-            $file->title = $filename;
+            $file->title = $fileData->name;
             Storage::delete($file->files_path);
-            $file->files_path = $files->storeAs($file_path, $fileNameToStore);
+            $file->storeAs($fileData->directory);
+            $file->files_path = $fileData->directory;
             $file->user_id = auth()->user()->id;
-            $file->extension = $extension;
+            $file->extension = $fileData->extension;
         }else{
             if($request->input('title') != $file->title){
                 $file->title = $request->input('title');
             }
         }
+        
         $file->save();
         return redirect('/files')->with('success', 'Directory Update');
     }
@@ -176,11 +168,18 @@ class FilesController extends Controller
             return redirect('/files')->with('error', 'Unauthorized Page');
         }
         
-       
         Storage::delete($file->files_path);
-        
         
         $file->delete();
         return redirect('/files')->with('success', 'Directory Removed');        
+    }
+
+    public function download(int $id){
+        $file = File::find($id)->firstOrFail();
+        return response()->download($this->getFilesStorage().DIRECTORY_SEPARATOR.$file->files_path, $file->title);
+    }
+    public function search(Request $request){
+        $files = File::where('title', 'like', '%' . $request->search . '%')->orderBy('created_at', 'desc')->paginate(5);
+        return view('files.show',compact('files'));
     }
 }

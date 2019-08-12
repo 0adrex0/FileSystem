@@ -15,7 +15,8 @@ Route::get('/', function () {
     return view('pages/index');
 });
 Route::resource('files', 'FilesController');
-
+Route::get('/download/{id}', 'FilesController@download');
+Route::get('/search', 'FilesController@search');
 Route::get('auth/{provider}', 'Auth\LoginController@redirectToProvider');
 Route::get('auth/{provider}/callback', 'Auth\LoginController@handleProviderCallback');
 
