@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Response;
-use App\Http\Traits\StorageProvider;
 use App\File;
 use App\User;
+use Illuminate\Http\Request;
+use League\Flysystem\Exception;
+use App\Http\Traits\FileProvider;
+use App\Http\Traits\StorageProvider;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
 
 class FilesController extends Controller
 {
     use StorageProvider;
-
-     /**
+    use FileProvider;
+    /**
      * Create a new controller instance.
      *
      * @return void
@@ -29,11 +32,14 @@ class FilesController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-     
+
     public function index()
     {
-        $files = File::select('user_id')->distinct()->orderBy('created_at', 'desc')->paginate(5);
-        
+       // $files = File::select('user_id')->distinct()->get();
+        // ->orderBy('created_at', 'desc')->paginate(5);
+        if(!Auth::guest()) $files = User::where('is_public_dir', true)->orWhere('id', Auth::user()->id)->paginate(5);
+        else $files = User::where('is_public_dir', true)->paginate(5);
+
         return view('files.index',compact('files'));
     }
 
@@ -57,16 +63,13 @@ class FilesController extends Controller
     {
         $this->validate($request, [
             //'title' => 'required',
-           
+
         ]);
-        
-        
+
         if($request->hasFile('files_path')){
             $files = $request->file('files_path');
-            
             foreach($files as $value){
                 $file = $this->getFileData($value, $this->getRelativeFilesStorage());
-
                 try {
                     Storage::putFileAs($file->directory, $value, $file->processedName);
                 } catch (Exception $exception) {
@@ -81,7 +84,6 @@ class FilesController extends Controller
                 $newFile->save();
             }
         }
-        
         return redirect('/files')->with('success', 'Directory Created');
     }
 
@@ -91,18 +93,28 @@ class FilesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(int $id)
+    public function show(Request $request,int $id)
     {
-        $files = File::where('user_id', $id)->orderBy('created_at','desc')->paginate(5);
+        if(Auth::guest()){
+            return redirect('/login')->with('error', 'Enter to accaunt');
+        }
+        $user = User::find($id);
 
-        foreach ($files as $file) {
-            $file->size = Storage::size($this->getRelativeFilesStorage().DIRECTORY_SEPARATOR.$file->files_path);
+        if((Auth::user()->id == $id) || ($user->password_dir == $request->password)) {
+            $files = File::where('user_id', $id)->orderBy('created_at','desc')->paginate(5);
+
+            foreach ($files as $file) {
+                $file->size = Storage::size($this->getRelativeFilesStorage($id).DIRECTORY_SEPARATOR.$file->files_path);
+            }
+
+            $data = array(
+                'files' => $files,
+                'userId' => $id
+            );
+            return view('files.show')->with($data);
         }
 
-        $data = array( 
-            'files' => $files,
-        );
-        return view('files.show')->with($data);
+        return redirect('/files')->with('error', 'Failed password');
     }
 
     /**
@@ -131,18 +143,26 @@ class FilesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, File $file)
+    public function update(Request $request, int $id)
     {
         $this->validate($request, [
-            'title' => 'required',
+            // 'title' => 'required',
         ]);
+        $file = File::find($id);
+
         if($request->hasFile('files_path')){
-            $fileData = $this->getFileData($request->file('files_path'), $this->getFilesStorage());
+            $fileData = $this->getFileData($request->file('files_path'), $this->getRelativeFilesStorage());
+
+            try{
+                Storage::delete($fileData->directory.DIRECTORY_SEPARATOR.$file->files_path);
+                Storage::putFileAs($fileData->directory, $request->files_path, $fileData->processedName);
+            }catch(Exception $ex){
+                return redirect('/files')->with('error', 'Dont worry be happy');
+            }
+
 
             $file->title = $fileData->name;
-            Storage::delete($file->files_path);
-            $file->storeAs($fileData->directory);
-            $file->files_path = $fileData->directory;
+            $file->files_path = $fileData->processedName;
             $file->user_id = auth()->user()->id;
             $file->extension = $fileData->extension;
         }else{
@@ -150,7 +170,7 @@ class FilesController extends Controller
                 $file->title = $request->input('title');
             }
         }
-        
+
         $file->save();
         return redirect('/files')->with('success', 'Directory Update');
     }
@@ -167,19 +187,19 @@ class FilesController extends Controller
         if(auth()->user()->id !== $file->user_id){
             return redirect('/files')->with('error', 'Unauthorized Page');
         }
-        
-        Storage::delete($file->files_path);
-        
+
+        $fileData = $this->getRelativeFilesStorage($file->user_id);
+
+        try{
+            Storage::delete($fileData.DIRECTORY_SEPARATOR.$file->files_path);
+        }catch(Exception $ex){
+            return redirect('/files')->with('error', 'Dont worry be happy');
+        }
+
         $file->delete();
-        return redirect('/files')->with('success', 'Directory Removed');        
+        return redirect('/files')->with('success', 'Directory Removed');
     }
 
-    public function download(int $id){
-        $file = File::find($id)->firstOrFail();
-        return response()->download($this->getFilesStorage().DIRECTORY_SEPARATOR.$file->files_path, $file->title);
-    }
-    public function search(Request $request){
-        $files = File::where('title', 'like', '%' . $request->search . '%')->orderBy('created_at', 'desc')->paginate(5);
-        return view('files.show',compact('files'));
-    }
+
+
 }

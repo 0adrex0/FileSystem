@@ -2,14 +2,16 @@
 
 namespace App\Http\Traits;
 
+use App\User;
+
 trait StorageProvider {
-    private function getFilesStorage(): string {
-        $email = auth()->user()->email;
+    private function getFilesStorage(int $userId = null): string {
+        $email = User::getUserEmailById($userId);
         return storage_path('app'.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'files_paths'.DIRECTORY_SEPARATOR.$email);
     }
 
-    private function getRelativeFilesStorage(): string {
-        $email = auth()->user()->email;
+    private function getRelativeFilesStorage(int $userId = null): string {
+        $email = User::getUserEmailById($userId);
         return 'public'.DIRECTORY_SEPARATOR.'files_paths'.DIRECTORY_SEPARATOR.$email;
     }
 

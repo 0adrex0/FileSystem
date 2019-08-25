@@ -9,17 +9,18 @@
 
         </div>
         <div class="row">
-                {!! Form::open(['action' => ['FilesController@update', $file->id], 'method' => 'POST', 'enctype' => 'multipart/form-data', 'files' => true]) !!}
-                    <div class="form-group">
-                        {{Form::label('title', 'Title')}}
-                        {{Form::text('title', $file->title, ['class' => 'form-control', 'placeholder' => 'Title'])}}
-                    </div>
-                    <div class="form-group">
-                            {{Form::file('files_path')}}
-                    </div>
-                    {{Form::hidden('_method','PUT')}}
-                    {{Form::submit('Submit', ['class'=>'btn btn-primary'])}}
-                {!! Form::close() !!}
+            <form action="/files/{{$file->id}}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="form-group">
+                    <label for="title">{{$file->title}}</label>
+                    <input type="text" name="title" class="form-control", placeholder="Title">
+                </div>
+                <div class="form-group">
+                    <input type="file" name="files_path" multiple="true">
+                </div>
+                <input type="hidden" name="_method" value="PUT">
+                <button type="submit" class="btn btn-primary" >Submit</button>
+            </form>
         </div>
     </div>
 @endsection

@@ -30,4 +30,15 @@ class User extends Authenticatable
     public function files(){
         return $this->hasMany('App\File');
     }
+
+    public static function getUserEmailById(int $id = null): string {
+        $email = null;
+        if ($id) {
+            $email = User::find($id)->email;
+        } else {
+            $email = auth()->user()->email;
+        }
+
+        return $email;
+    }
 }

@@ -17,10 +17,12 @@ Route::get('/', function () {
 Route::resource('files', 'FilesController');
 Route::get('/download/{id}', 'FilesController@download');
 Route::get('/search', 'FilesController@search');
+Route::post('/enter', 'FilesController@directoryenter');
+
 Route::get('auth/{provider}', 'Auth\LoginController@redirectToProvider');
 Route::get('auth/{provider}/callback', 'Auth\LoginController@handleProviderCallback');
 
 Auth::routes();
 
 Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
-Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
+Route::post('/settings', 'DashboardController@settings');

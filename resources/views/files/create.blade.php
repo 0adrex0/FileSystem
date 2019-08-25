@@ -9,16 +9,21 @@
 
         </div>
         <div class="row">
-                {!! Form::open(['action' => 'FilesController@store', 'method' => 'POST',  'enctype' => 'multipart/form-data', 'files' => true]) !!}
-                   <!-- <div class="form-group">
-                        {{Form::label('title', 'Title')}}
-                        {{Form::text('title', '', ['class' => 'form-control', 'placeholder' => 'Title'])}}
-                    </div>-->
-                    <div class="form-group">
-                        {{Form::file('files_path[]', ['multiple'])}}
-                    </div>
-                    {{Form::submit('Submit', ['class'=>'btn btn-primary'])}}
-                {!! Form::close() !!}
+            <form action="/files" method="POST" enctype="multipart/form-data">
+                @csrf
+
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" class="form-control", placeholder="Title">
+                </div>
+                <div class="form-group">
+                    <input type="file" name="files_path[]" multiple="true">
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
         </div>
     </div>
 @endsection
+
+
+
