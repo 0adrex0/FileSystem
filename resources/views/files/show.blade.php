@@ -4,20 +4,21 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <a href="/files" class="btn btn-default">Go Back</a>  
+                <a href="/files" class="btn btn-default">Go Back</a>
                 <div class="pull-right">
                         {{$files->links()}}
                 </div>
             </div>
         </div>
         <div class="row">
-                {!!Form::open(['action' => ['FilesController@search'], 'method' => 'GET', 'class' => 'd-inline-block'])!!}
-                    <input type="search" name="search">
-                    <button type="submit" class="btn" >Search</button>
-                {!!Form::close()!!}
+            <form action="/search"  method="GET" class="d-inline-block">
+                @csrf
+                <input type="text" name="search">
+                <button type="submit" class="btn" >Search</button>
+                <input type="hidden" name="userId" value="{{$userId}}">
             </form>
         </div>
-        <div class="row">        
+        <div class="row">
             <table class="table table-hover">
                 <thead>
                   <tr>
@@ -42,14 +43,15 @@
                             <td scope="col">
                                 <div class="d-flex justify-content-around align-items-center text-center">
                                     @if(!Auth::guest())
-                                        @if(Auth::user()->id == $file->user_id)
-                                            <a href="/files/{{$file->id}}/edit" class="btn btn-default glyphicon glyphicon-edit"></a>
-                                            <a href="/download/{{$file->id}}" class="glyphicon glyphicon-cloud-download btn btn-primary"></a>
-                                            {!!Form::open(['action' => ['FilesController@destroy', $file->id], 'method' => 'POST', 'class' => 'd-inline-block'])!!}
-                                                {{Form::hidden('_method', 'DELETE')}}
-                                                <button type="submit" class="glyphicon glyphicon-trash btn btn-danger"></button>
-                                            {!!Form::close()!!}
-                                        @endif
+                                        {{-- @if(Auth::user()->id == $file->user_id) --}}
+                                            <a href="/files/{{$file->id}}/edit" class="btn btn-outline-dark"><i class="fas fa-edit"></i></a>
+                                            <a href="/download/{{$file->id}}" class="btn btn-primary"><i class="fas fa-file-download"></i></a>
+                                            <form action="/files/{{$file->id}}"  method="POST" class="d-inline-block">
+                                                @csrf
+                                                <input type="hidden" name="_method" value="DELETE">
+                                                <button type="submit" class="btn btn-danger"><i class="fas fa-trash-alt"></i></button>
+                                            </form>
+                                        {{-- @endif --}}
                                     @endif
                                 </div>
                             </td>
@@ -58,8 +60,8 @@
                 </tbody>
               </table>
             <hr>
-            
-        
+
+
         </div>
     </div>
 @endsection

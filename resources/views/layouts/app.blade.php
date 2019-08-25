@@ -12,11 +12,14 @@
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/4fd5aca686.js"></script>
 </head>
 <body>
     <div id="app">
-        @include('inc/navbar')
-        @include('inc/messages')
+        <div class="container">
+            @include('inc/navbar')
+            @include('inc/messages')
+        </div>
         @yield('content')
     </div>
 

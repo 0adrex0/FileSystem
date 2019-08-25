@@ -8,7 +8,7 @@ class File extends Model
 {
     //Tabel Name
     protected $table = 'files';
-    // Primary Key 
+    // Primary Key
     protected $primaryKey = 'id';
     // TimeStamps
     public $timestamps = true;
@@ -16,5 +16,6 @@ class File extends Model
     public function user(){
         return $this->belongsTo('App\User');
     }
+
 
 }

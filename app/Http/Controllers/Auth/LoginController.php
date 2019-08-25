@@ -28,7 +28,7 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/';
+    protected $redirectTo = '/files';
 
     /**
      * Create a new controller instance.
@@ -45,14 +45,14 @@ class LoginController extends Controller
         return Socialite::driver($provider)->redirect();
     }
 
-   
+
     public function handleProviderCallback($provider)
     {
-    
+
         $user = Socialite::driver($provider)->stateless()->user();
         $authUser = $this->findOrCreateUser($user, $provider);
         Auth::login($authUser, true);
-        return redirect($this->redirectTo);        
+        return redirect($this->redirectTo);
     }
 
     public function findOrCreateUser($user, $provider)
@@ -65,7 +65,7 @@ class LoginController extends Controller
            'name' => $user->name,
            'email' => $user->email,
            'provider' => strtoupper($provider),
-           'provider_id' => $user->id 
+           'provider_id' => $user->id
         ]);
     }
 }
