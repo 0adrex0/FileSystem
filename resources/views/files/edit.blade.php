@@ -3,7 +3,7 @@
 @section('content')
     <div class="container">
         <div class="row">
-            <a href="/files" class="btn btn-default">Go Back</a>
+            <a href="{{ URL::previous() ?? '/files' }}" class="btn btn-default">Go Back</a>
             <hr>
             <h1>Edit Files</h1>
 

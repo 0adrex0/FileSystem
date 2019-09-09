@@ -31,7 +31,7 @@
     <div class="modal" tabindex="-1" role="dialog" data-toggle="modal" data-target="#myModal">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
-                    <form action="/files/" method="GET">
+                    <form action="/files/" method="POST">
                         @csrf
                         <div class="modal-header">
                             <h5 class="modal-title">Директория запаролена</h5>
@@ -77,6 +77,7 @@
 
             }
         }
+
     }
 
 </script>

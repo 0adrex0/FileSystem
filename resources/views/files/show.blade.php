@@ -4,7 +4,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <a href="/files" class="btn btn-default">Go Back</a>
+                <a href="{{ URL::previous() ?? '/files' }}" class="btn btn-default">Go Back</a>
                 <div class="pull-right">
                         {{$files->links()}}
                 </div>
