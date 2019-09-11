@@ -15,6 +15,8 @@ Route::get('/', function () {
     return view('pages/index');
 });
 Route::resource('files', 'FilesController');
+Route::post('/files/{id}', 'FilesController@show');
+
 Route::get('/download/{id}', 'FilesController@download');
 Route::get('/search', 'FilesController@search');
 Route::post('/enter', 'FilesController@directoryenter');

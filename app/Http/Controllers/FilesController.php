@@ -93,26 +93,32 @@ class FilesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request,int $id)
+    public function show(Request $request, int $id)
     {
         if(Auth::guest()){
             return redirect('/login')->with('error', 'Enter to accaunt');
         }
-        $user = User::find($id);
 
-        if((Auth::user()->id == $id) || ($user->password_dir == $request->password)) {
-            $files = File::where('user_id', $id)->orderBy('created_at','desc')->paginate(5);
+        $selectedFile = $id;
+        if (!$selectedFile) {
+            $selectedFile = $request->id;
+        }
+
+        $user = User::find($selectedFile);
+
+        if($user && ((Auth::user()->id == $selectedFile) || ($user->password_dir == $request->password))) {
+            $files = File::where('user_id', $selectedFile)->orderBy('created_at','desc')->paginate(5);
 
             foreach ($files as $file) {
-                $file->size = Storage::size($this->getRelativeFilesStorage($id).DIRECTORY_SEPARATOR.$file->files_path);
+                $file->size = Storage::size($this->getRelativeFilesStorage($selectedFile).DIRECTORY_SEPARATOR.$file->files_path);
             }
 
             $data = array(
                 'files' => $files,
-                'userId' => $id
+                'userId' => $selectedFile
             );
             return view('files.show')->with($data);
-        }
+            }
 
         return redirect('/files')->with('error', 'Failed password');
     }
