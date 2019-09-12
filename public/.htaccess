@@ -3,7 +3,7 @@
         Options -MultiViews -Indexes
     </IfModule>
 
-    DirectoryIndex home.php
+    DirectoryIndex index.php
 
     RewriteEngine On
 
